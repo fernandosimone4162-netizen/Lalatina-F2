@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Lalatina – Fase 1 (Teste)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #0f172a;
+    color: #fff;
+}
+.container {
+    max-width: 420px;
+    margin: auto;
+    padding: 20px;
+}
+.card {
+    background: #020617;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.4);
+}
+.question {
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+.help {
+    font-size: 14px;
+    color: #94a3b8;
+    margin-bottom: 15px;
+}
+input {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    font-size: 16px;
+}
+button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 15px;
+    border: none;
+    border-radius: 8px;
+    background: #22c55e;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+.feedback {
+    margin-top: 15px;
+    font-weight: bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <div class="card">
+        <div class="question" id="question"></div>
+        <div class="help">Digite a tradução (não responda em inglês)</div>
+        <input type="text" id="answer" placeholder="Digite aqui">
+        <button onclick="checkAnswer()">Confirmar</button>
+        <div class="feedback" id="feedback"></div>
+    </div>
+</div>
+
+<script>
+const questions = [
+    { q: "Hi", a: ["oi", "olá"] },
+    { q: "Hello", a: ["olá", "oi"] },
+    { q: "My name is John", a: ["meu nome é john", "me chamo john"] },
+    { q: "I am fine", a: ["estou bem", "eu estou bem"] },
+    { q: "Good morning", a: ["bom dia"] },
+    { q: "Good night", a: ["boa noite"] },
+    { q: "Thank you", a: ["obrigado", "obrigada"] },
+    { q: "Yes", a: ["sim"] },
+    { q: "No", a: ["não", "nao"] },
+    { q: "I am here", a: ["estou aqui", "eu estou aqui"] }
+];
+
+let index = 0;
+
+function loadQuestion() {
+    document.getElementById("question").innerText = questions[index].q;
+    document.getElementById("answer").value = "";
+    document.getElementById("feedback").innerText = "";
+}
+
+function normalize(text) {
+    return text
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim();
+}
+
+function checkAnswer() {
+    const user = normalize(document.getElementById("answer").value);
+    const correct = questions[index].a.map(a => normalize(a));
+
+    if (correct.includes(user)) {
+        document.getElementById("feedback").innerText = "✅ Correto!";
+        index++;
+        if (index < questions.length) {
+            setTimeout(loadQuestion, 800);
+        } else {
+            document.getElementById("question").innerText = "🎉 Treino concluído!";
+            document.getElementById("answer").style.display = "none";
+            document.querySelector("button").style.display = "none";
+        }
+    } else {
+        document.getElementById("feedback").innerText = "❌ Tente novamente";
+    }
+}
+
+loadQuestion();
+</script>
+
+</body>
+</html>
