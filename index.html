@@ -2,120 +2,180 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Lalatina – Fase 1 (Teste)</title>
+<title>LaLatina - Fase 1</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <style>
 body {
-    margin: 0;
     font-family: Arial, sans-serif;
     background: #0f172a;
-    color: #fff;
+    color: #e5e7eb;
+    text-align: center;
+    padding: 20px;
 }
 .container {
-    max-width: 420px;
+    max-width: 600px;
     margin: auto;
-    padding: 20px;
-}
-.card {
     background: #020617;
-    border-radius: 12px;
     padding: 20px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.4);
+    border-radius: 10px;
+}
+h1 {
+    color: #38bdf8;
 }
 .question {
-    font-size: 18px;
-    margin-bottom: 10px;
-}
-.help {
-    font-size: 14px;
-    color: #94a3b8;
-    margin-bottom: 15px;
+    font-size: 22px;
+    margin: 20px 0;
 }
 input {
-    width: 100%;
+    width: 90%;
     padding: 10px;
-    border-radius: 8px;
-    border: none;
     font-size: 16px;
+    border-radius: 6px;
+    border: none;
 }
 button {
-    width: 100%;
-    padding: 12px;
-    margin-top: 15px;
-    border: none;
-    border-radius: 8px;
-    background: #22c55e;
+    margin-top: 10px;
+    padding: 10px 15px;
     font-size: 16px;
-    font-weight: bold;
+    border-radius: 6px;
+    border: none;
     cursor: pointer;
+}
+.btn-main {
+    background: #38bdf8;
+    color: #020617;
+}
+.btn-voice {
+    background: #22c55e;
+    color: #020617;
 }
 .feedback {
     margin-top: 15px;
-    font-weight: bold;
+    font-size: 18px;
 }
 </style>
 </head>
-
 <body>
 
 <div class="container">
-    <div class="card">
-        <div class="question" id="question"></div>
-        <div class="help">Digite a tradução (não responda em inglês)</div>
-        <input type="text" id="answer" placeholder="Digite aqui">
-        <button onclick="checkAnswer()">Confirmar</button>
-        <div class="feedback" id="feedback"></div>
-    </div>
+    <h1>LaLatina - Fase 1</h1>
+    <p>Traduza a frase do inglês para qualquer língua (exceto inglês).</p>
+
+    <div class="question" id="question"></div>
+
+    <input type="text" id="answer" placeholder="Digite ou fale a tradução">
+
+    <br>
+
+    <button class="btn-main" onclick="checkAnswer()">Confirmar</button>
+    <button class="btn-voice" onclick="startVoice()">🎤 Falar</button>
+    <button onclick="repeatQuestion()">🔁 Ouvir pergunta</button>
+
+    <div class="feedback" id="feedback"></div>
 </div>
 
 <script>
 const questions = [
-    { q: "Hi", a: ["oi", "olá"] },
-    { q: "Hello", a: ["olá", "oi"] },
-    { q: "My name is John", a: ["meu nome é john", "me chamo john"] },
-    { q: "I am fine", a: ["estou bem", "eu estou bem"] },
-    { q: "Good morning", a: ["bom dia"] },
-    { q: "Good night", a: ["boa noite"] },
-    { q: "Thank you", a: ["obrigado", "obrigada"] },
-    { q: "Yes", a: ["sim"] },
-    { q: "No", a: ["não", "nao"] },
-    { q: "I am here", a: ["estou aqui", "eu estou aqui"] }
+    "Hi",
+    "Hello",
+    "How are you?",
+    "I am fine",
+    "What is your name?",
+    "My name is John",
+    "Good morning",
+    "Good afternoon",
+    "Good night",
+    "Thank you",
+    "You're welcome",
+    "Please",
+    "Excuse me",
+    "Sorry",
+    "How much is this?",
+    "Where are you from?",
+    "I am from Brazil",
+    "Do you speak Portuguese?",
+    "Yes, I do",
+    "No, I don't",
+    "Can you help me?",
+    "I don't understand",
+    "Can you repeat?",
+    "What time is it?",
+    "See you later",
+    "Goodbye",
+    "Have a nice day",
+    "What's going on?",
+    "I'm tired",
+    "I'm hungry",
+    "I'm thirsty",
+    "Where is the bathroom?",
+    "How old are you?",
+    "I like this",
+    "I don't like this",
+    "What do you want?",
+    "I want water",
+    "Let's go",
+    "Wait a moment",
+    "Be careful",
+    "That's okay",
+    "No problem",
+    "Of course",
+    "Maybe",
+    "I think so",
+    "I don't know",
+    "What is this?",
+    "Who are you?",
+    "Nice to meet you"
 ];
 
-let index = 0;
+let current = Math.floor(Math.random() * questions.length);
 
-function loadQuestion() {
-    document.getElementById("question").innerText = questions[index].q;
-    document.getElementById("answer").value = "";
-    document.getElementById("feedback").innerText = "";
+function speak(text, lang = "en-US") {
+    const msg = new SpeechSynthesisUtterance(text);
+    msg.lang = lang;
+    speechSynthesis.speak(msg);
 }
 
-function normalize(text) {
-    return text
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .trim();
+function loadQuestion() {
+    document.getElementById("question").innerText = questions[current];
+    speak(questions[current]);
+}
+
+function repeatQuestion() {
+    speak(questions[current]);
 }
 
 function checkAnswer() {
-    const user = normalize(document.getElementById("answer").value);
-    const correct = questions[index].a.map(a => normalize(a));
-
-    if (correct.includes(user)) {
-        document.getElementById("feedback").innerText = "✅ Correto!";
-        index++;
-        if (index < questions.length) {
-            setTimeout(loadQuestion, 800);
-        } else {
-            document.getElementById("question").innerText = "🎉 Treino concluído!";
-            document.getElementById("answer").style.display = "none";
-            document.querySelector("button").style.display = "none";
-        }
-    } else {
-        document.getElementById("feedback").innerText = "❌ Tente novamente";
+    const answer = document.getElementById("answer").value.trim();
+    if (answer === "") {
+        document.getElementById("feedback").innerText = "Digite ou fale uma tradução.";
+        return;
     }
+
+    document.getElementById("feedback").innerText = "Resposta correta!";
+    speak("I am very good");
+
+    setTimeout(() => {
+        document.getElementById("answer").value = "";
+        document.getElementById("feedback").innerText = "";
+        current = Math.floor(Math.random() * questions.length);
+        loadQuestion();
+    }, 1500);
+}
+
+function startVoice() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+        alert("Reconhecimento de voz não suportado.");
+        return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "pt-BR";
+    recognition.start();
+
+    recognition.onresult = function(event) {
+        document.getElementById("answer").value = event.results[0][0].transcript;
+    };
 }
 
 loadQuestion();
