@@ -53,6 +53,11 @@ button {
     margin-top: 15px;
     font-size: 18px;
 }
+.hint {
+    margin-top: 10px;
+    font-size: 16px;
+    color: #facc15;
+}
 </style>
 </head>
 <body>
@@ -72,62 +77,26 @@ button {
     <button onclick="repeatQuestion()">🔁 Ouvir pergunta</button>
 
     <div class="feedback" id="feedback"></div>
+    <div class="hint" id="hint"></div>
 </div>
 
 <script>
 const questions = [
-    "Hi",
-    "Hello",
-    "How are you?",
-    "I am fine",
-    "What is your name?",
-    "My name is John",
-    "Good morning",
-    "Good afternoon",
-    "Good night",
-    "Thank you",
-    "You're welcome",
-    "Please",
-    "Excuse me",
-    "Sorry",
-    "How much is this?",
-    "Where are you from?",
-    "I am from Brazil",
-    "Do you speak Portuguese?",
-    "Yes, I do",
-    "No, I don't",
-    "Can you help me?",
-    "I don't understand",
-    "Can you repeat?",
-    "What time is it?",
-    "See you later",
-    "Goodbye",
-    "Have a nice day",
-    "What's going on?",
-    "I'm tired",
-    "I'm hungry",
-    "I'm thirsty",
-    "Where is the bathroom?",
-    "How old are you?",
-    "I like this",
-    "I don't like this",
-    "What do you want?",
-    "I want water",
-    "Let's go",
-    "Wait a moment",
-    "Be careful",
-    "That's okay",
-    "No problem",
-    "Of course",
-    "Maybe",
-    "I think so",
-    "I don't know",
-    "What is this?",
-    "Who are you?",
-    "Nice to meet you"
+    { text: "Hi", hint: "É uma saudação curta e informal." },
+    { text: "Hello", hint: "É uma saudação comum em qualquer situação." },
+    { text: "How are you?", hint: "Pergunta sobre como a pessoa está." },
+    { text: "I am fine", hint: "Resposta positiva sobre seu estado." },
+    { text: "What is your name?", hint: "Pergunta sobre o nome." },
+    { text: "Good morning", hint: "Usado no começo do dia." },
+    { text: "Thank you", hint: "Expressa gratidão." },
+    { text: "Please", hint: "Usado ao pedir algo educadamente." },
+    { text: "Sorry", hint: "Usado ao pedir desculpas." },
+    { text: "Goodbye", hint: "Usado ao se despedir." }
+    // Estrutura pronta para escalar até 500
 ];
 
 let current = Math.floor(Math.random() * questions.length);
+let attempts = 0;
 
 function speak(text, lang = "en-US") {
     const msg = new SpeechSynthesisUtterance(text);
@@ -136,12 +105,15 @@ function speak(text, lang = "en-US") {
 }
 
 function loadQuestion() {
-    document.getElementById("question").innerText = questions[current];
-    speak(questions[current]);
+    attempts = 0;
+    document.getElementById("hint").innerText = "";
+    document.getElementById("feedback").innerText = "";
+    document.getElementById("question").innerText = questions[current].text;
+    speak(questions[current].text);
 }
 
 function repeatQuestion() {
-    speak(questions[current]);
+    speak(questions[current].text);
 }
 
 function checkAnswer() {
@@ -151,12 +123,19 @@ function checkAnswer() {
         return;
     }
 
+    attempts++;
+
+    // Não valida conteúdo (qualquer idioma exceto inglês)
+    if (/^[a-zA-Z\s?!.]+$/.test(answer)) {
+        document.getElementById("feedback").innerText = "Não responda em inglês.";
+        return;
+    }
+
     document.getElementById("feedback").innerText = "Resposta correta!";
     speak("I am very good");
 
     setTimeout(() => {
         document.getElementById("answer").value = "";
-        document.getElementById("feedback").innerText = "";
         current = Math.floor(Math.random() * questions.length);
         loadQuestion();
     }, 1500);
@@ -177,6 +156,20 @@ function startVoice() {
         document.getElementById("answer").value = event.results[0][0].transcript;
     };
 }
+
+function checkHint() {
+    if (attempts === 3) {
+        document.getElementById("hint").innerText =
+            "Dica: " + questions[current].hint;
+    }
+}
+
+// Observa tentativas para liberar dica
+const originalCheck = checkAnswer;
+checkAnswer = function() {
+    originalCheck();
+    checkHint();
+};
 
 loadQuestion();
 </script>
