@@ -13,17 +13,15 @@ body {
     padding: 20px;
 }
 .container {
-    max-width: 600px;
+    max-width: 650px;
     margin: auto;
     background: #020617;
     padding: 20px;
     border-radius: 10px;
 }
-h1 {
-    color: #38bdf8;
-}
+h1 { color: #38bdf8; }
 .question {
-    font-size: 22px;
+    font-size: 24px;
     margin: 20px 0;
 }
 input {
@@ -41,30 +39,17 @@ button {
     border: none;
     cursor: pointer;
 }
-.btn-main {
-    background: #38bdf8;
-    color: #020617;
-}
-.btn-voice {
-    background: #22c55e;
-    color: #020617;
-}
-.feedback {
-    margin-top: 15px;
-    font-size: 18px;
-}
-.hint {
-    margin-top: 10px;
-    font-size: 16px;
-    color: #facc15;
-}
+.btn-main { background: #38bdf8; color: #020617; }
+.btn-voice { background: #22c55e; color: #020617; }
+.feedback { margin-top: 15px; font-size: 18px; }
+.hint { margin-top: 10px; font-size: 16px; color: #facc15; }
 </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>LaLatina - Fase 1</h1>
-    <p>Traduza a frase do inglês para qualquer língua (exceto inglês).</p>
+    <h1>LaLatina – Fase 1</h1>
+    <p>Traduza do inglês para qualquer língua (exceto inglês).</p>
 
     <div class="question" id="question"></div>
 
@@ -82,23 +67,76 @@ button {
 
 <script>
 const questions = [
-    { text: "Hi", hint: "É uma saudação curta e informal." },
-    { text: "Hello", hint: "É uma saudação comum em qualquer situação." },
-    { text: "How are you?", hint: "Pergunta sobre como a pessoa está." },
-    { text: "I am fine", hint: "Resposta positiva sobre seu estado." },
-    { text: "What is your name?", hint: "Pergunta sobre o nome." },
-    { text: "Good morning", hint: "Usado no começo do dia." },
-    { text: "Thank you", hint: "Expressa gratidão." },
-    { text: "Please", hint: "Usado ao pedir algo educadamente." },
-    { text: "Sorry", hint: "Usado ao pedir desculpas." },
-    { text: "Goodbye", hint: "Usado ao se despedir." }
-    // Estrutura pronta para escalar até 500
+{ text:"Hi", hint:"Saudação curta e informal.", weight:1 },
+{ text:"Hello", hint:"Saudação comum.", weight:1 },
+{ text:"How are you?", hint:"Pergunta sobre estado.", weight:1 },
+{ text:"I am fine", hint:"Resposta positiva.", weight:1 },
+{ text:"What is your name?", hint:"Pergunta sobre nome.", weight:1 },
+{ text:"My name is John", hint:"Apresentação.", weight:1 },
+{ text:"Good morning", hint:"Usado pela manhã.", weight:1 },
+{ text:"Good afternoon", hint:"Usado à tarde.", weight:1 },
+{ text:"Good night", hint:"Usado à noite.", weight:1 },
+{ text:"Thank you", hint:"Gratidão.", weight:1 },
+{ text:"You're welcome", hint:"Resposta a agradecimento.", weight:2 },
+{ text:"Please", hint:"Pedido educado.", weight:1 },
+{ text:"Excuse me", hint:"Chamar atenção.", weight:2 },
+{ text:"Sorry", hint:"Pedido de desculpa.", weight:1 },
+{ text:"How much is this?", hint:"Pergunta de preço.", weight:2 },
+{ text:"Where are you from?", hint:"Origem da pessoa.", weight:2 },
+{ text:"I am from Brazil", hint:"Resposta de origem.", weight:2 },
+{ text:"Do you speak Portuguese?", hint:"Pergunta de idioma.", weight:2 },
+{ text:"Yes, I do", hint:"Resposta afirmativa.", weight:2 },
+{ text:"No, I don't", hint:"Resposta negativa.", weight:2 },
+{ text:"Can you help me?", hint:"Pedido de ajuda.", weight:2 },
+{ text:"I don't understand", hint:"Expressa dificuldade.", weight:2 },
+{ text:"Can you repeat?", hint:"Pedido de repetição.", weight:2 },
+{ text:"What time is it?", hint:"Pergunta sobre horas.", weight:2 },
+{ text:"See you later", hint:"Despedida informal.", weight:2 },
+{ text:"Goodbye", hint:"Despedida formal.", weight:1 },
+{ text:"Have a nice day", hint:"Desejo positivo.", weight:2 },
+{ text:"What's going on?", hint:"Pergunta informal.", weight:3 },
+{ text:"I'm tired", hint:"Estado físico.", weight:2 },
+{ text:"I'm hungry", hint:"Necessidade.", weight:2 },
+{ text:"I'm thirsty", hint:"Necessidade.", weight:2 },
+{ text:"Where is the bathroom?", hint:"Local importante.", weight:3 },
+{ text:"How old are you?", hint:"Pergunta de idade.", weight:3 },
+{ text:"I like this", hint:"Opinião positiva.", weight:2 },
+{ text:"I don't like this", hint:"Opinião negativa.", weight:2 },
+{ text:"What do you want?", hint:"Desejo.", weight:3 },
+{ text:"I want water", hint:"Pedido simples.", weight:2 },
+{ text:"Let's go", hint:"Convite.", weight:2 },
+{ text:"Wait a moment", hint:"Pedido de espera.", weight:2 },
+{ text:"Be careful", hint:"Aviso.", weight:3 },
+{ text:"No problem", hint:"Resposta positiva.", weight:2 },
+{ text:"Of course", hint:"Confirmação.", weight:2 },
+{ text:"Maybe", hint:"Incerteza.", weight:2 },
+{ text:"I think so", hint:"Opinião leve.", weight:3 },
+{ text:"I don't know", hint:"Desconhecimento.", weight:2 },
+{ text:"What is this?", hint:"Identificação.", weight:2 },
+{ text:"Who are you?", hint:"Identidade.", weight:2 },
+{ text:"Nice to meet you", hint:"Apresentação educada.", weight:2 }
 ];
 
-let current = Math.floor(Math.random() * questions.length);
+// ---------- ALGORITMO ADAPTATIVO REAL ----------
+let lastIndex = -1;
 let attempts = 0;
 
-function speak(text, lang = "en-US") {
+function chooseQuestion() {
+    let pool = [];
+    questions.forEach((q, i) => {
+        for (let j = 0; j < q.weight; j++) pool.push(i);
+    });
+    let next;
+    do {
+        next = pool[Math.floor(Math.random() * pool.length)];
+    } while (next === lastIndex);
+    lastIndex = next;
+    return next;
+}
+
+let current = chooseQuestion();
+
+function speak(text, lang="en-US") {
     const msg = new SpeechSynthesisUtterance(text);
     msg.lang = lang;
     speechSynthesis.speak(msg);
@@ -118,15 +156,11 @@ function repeatQuestion() {
 
 function checkAnswer() {
     const answer = document.getElementById("answer").value.trim();
-    if (answer === "") {
-        document.getElementById("feedback").innerText = "Digite ou fale uma tradução.";
-        return;
-    }
+    if (!answer) return;
 
     attempts++;
 
-    // Não valida conteúdo (qualquer idioma exceto inglês)
-    if (/^[a-zA-Z\s?!.]+$/.test(answer)) {
+    if (/^[a-zA-Z\s?!.,]+$/.test(answer)) {
         document.getElementById("feedback").innerText = "Não responda em inglês.";
         return;
     }
@@ -134,42 +168,32 @@ function checkAnswer() {
     document.getElementById("feedback").innerText = "Resposta correta!";
     speak("I am very good");
 
+    questions[current].weight = Math.max(1, questions[current].weight - 1);
+
     setTimeout(() => {
         document.getElementById("answer").value = "";
-        current = Math.floor(Math.random() * questions.length);
+        current = chooseQuestion();
         loadQuestion();
-    }, 1500);
+    }, 1400);
 }
 
 function startVoice() {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-        alert("Reconhecimento de voz não suportado.");
-        return;
-    }
-
-    const recognition = new SpeechRecognition();
-    recognition.lang = "pt-BR";
-    recognition.start();
-
-    recognition.onresult = function(event) {
-        document.getElementById("answer").value = event.results[0][0].transcript;
+    const R = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!R) return alert("Voz não suportada.");
+    const rec = new R();
+    rec.lang = "pt-BR";
+    rec.start();
+    rec.onresult = e => {
+        document.getElementById("answer").value = e.results[0][0].transcript;
     };
 }
 
-function checkHint() {
+setInterval(() => {
     if (attempts === 3) {
         document.getElementById("hint").innerText =
             "Dica: " + questions[current].hint;
     }
-}
-
-// Observa tentativas para liberar dica
-const originalCheck = checkAnswer;
-checkAnswer = function() {
-    originalCheck();
-    checkHint();
-};
+}, 300);
 
 loadQuestion();
 </script>
