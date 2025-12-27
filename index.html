@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>LaLatina – Teste Lucios</title>
+<title>LaLatina – Fase 1 (Teste)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -10,38 +10,38 @@ body {
     font-family: Arial, sans-serif;
     background: #0f1220;
     color: #fff;
-    text-align: center;
     padding: 20px;
 }
 .card {
-    background: #1b1f3b;
-    border-radius: 12px;
+    background: #1c2040;
     padding: 20px;
+    border-radius: 10px;
     max-width: 500px;
     margin: auto;
 }
 button {
-    margin: 8px;
-    padding: 10px 16px;
+    padding: 10px;
+    margin-top: 10px;
+    width: 100%;
+    font-size: 16px;
     border: none;
-    border-radius: 8px;
-    background: #4cafef;
-    color: #000;
-    font-weight: bold;
-    cursor: pointer;
-}
-button:hover {
-    opacity: 0.9;
+    border-radius: 5px;
 }
 input {
+    width: 100%;
     padding: 10px;
-    width: 80%;
-    border-radius: 8px;
-    border: none;
-    margin-top: 10px;
+    font-size: 16px;
 }
-small {
-    color: #aaa;
+#hint {
+    margin-top: 10px;
+    color: #ffd966;
+}
+#skipBtn {
+    background: #b33;
+    display: none;
+}
+#submitBtn {
+    background: #3b7cff;
 }
 </style>
 </head>
@@ -50,83 +50,141 @@ small {
 
 <div class="card">
     <h2>LaLatina – Fase 1</h2>
-    <p id="question"></p>
+    <p><strong>Dificuldade:</strong> <span id="difficulty">1%</span></p>
 
-    <input type="text" id="answer" placeholder="Type the translation">
+    <p id="questionText"></p>
 
-    <div>
-        <button onclick="checkAnswer()">Confirm</button>
-        <button onclick="repeatAudio()">🔊 Hear again</button>
-    </div>
+    <button onclick="playAudio()">🔊 Ouvir</button>
+
+    <input type="text" id="answer" placeholder="Digite em português">
+
+    <button id="submitBtn" onclick="checkAnswer()">Responder</button>
+    <button id="skipBtn" onclick="skipQuestion()">Pular pergunta</button>
 
     <p id="hint"></p>
-    <small id="status"></small>
+    <p id="feedback"></p>
 </div>
 
 <script>
-/* ===== BANCO SIMPLES DE PERGUNTAS (TESTE) ===== */
+/* =========================
+   BANCO DE PERGUNTAS (Fase 1)
+   Inglês -> Português
+========================= */
 const questions = [
-    { text: "Hi", answer: "oi", difficulty: 1, hint: "A common greeting" },
-    { text: "Good morning", answer: "bom dia", difficulty: 5, hint: "Something you say when you wake up" },
-    { text: "How are you?", answer: "como você está", difficulty: 10, hint: "Asking about someone’s condition" },
-    { text: "Nice to meet you", answer: "prazer em conhecer", difficulty: 20, hint: "Said when meeting someone" }
+    { id: 1, text: "Hi", answers: ["oi", "olá"], difficulty: 1, hint: "Forma informal de cumprimento" },
+    { id: 2, text: "Hello", answers: ["olá", "oi"], difficulty: 2, hint: "Cumprimento comum" },
+    { id: 3, text: "Good morning", answers: ["bom dia"], difficulty: 3, hint: "Usado ao acordar" },
+    { id: 4, text: "Good afternoon", answers: ["boa tarde"], difficulty: 4, hint: "Depois do almoço" },
+    { id: 5, text: "Good night", answers: ["boa noite"], difficulty: 5, hint: "Antes de dormir" }
 ];
 
-/* ===== ESTADO DO USUÁRIO ===== */
-let index = 0;
+/* =========================
+   ESTADO DO ALGORITMO
+========================= */
+let currentDifficulty = 1;
 let attempts = 0;
-let answeredCount = Number(localStorage.getItem("answeredCount")) || 0;
+let currentQuestion = null;
 
-/* ===== FUNÇÕES ===== */
-function loadQuestion() {
-    const q = questions[index];
-    document.getElementById("question").innerText =
-        `(${q.difficulty}%) Translate: "${q.text}"`;
-    document.getElementById("hint").innerText = "";
-    document.getElementById("answer").value = "";
-    attempts = 0;
-    speak(q.text);
+/* =========================
+   NORMALIZA TEXTO
+========================= */
+function normalize(text) {
+    return text
+        .toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^\w\s]/gi, "")
+        .trim();
 }
 
+/* =========================
+   ESCOLHE PERGUNTA
+========================= */
+function loadQuestion() {
+    attempts = 0;
+    document.getElementById("hint").innerText = "";
+    document.getElementById("feedback").innerText = "";
+    document.getElementById("skipBtn").style.display = "none";
+    document.getElementById("answer").value = "";
+
+    const pool = questions.filter(q => q.difficulty === currentDifficulty);
+    currentQuestion = pool[Math.floor(Math.random() * pool.length)];
+
+    document.getElementById("questionText").innerText = currentQuestion.text;
+    document.getElementById("difficulty").innerText = currentDifficulty + "%";
+
+    playAudio();
+}
+
+/* =========================
+   ÁUDIO EM INGLÊS
+========================= */
+function playAudio() {
+    const utterance = new SpeechSynthesisUtterance(currentQuestion.text);
+    utterance.lang = "en-US";
+    speechSynthesis.speak(utterance);
+}
+
+/* =========================
+   VERIFICA RESPOSTA
+========================= */
 function checkAnswer() {
-    const userAnswer = document.getElementById("answer").value.trim().toLowerCase();
-    const correct = questions[index].answer.toLowerCase();
     attempts++;
+    const userAnswer = normalize(document.getElementById("answer").value);
 
-    if (userAnswer === correct) {
-        answeredCount++;
-        saveProgress();
+    const correct = currentQuestion.answers.some(a =>
+        normalize(a) === userAnswer
+    );
 
-        index = (index + 1) % questions.length;
-        document.getElementById("status").innerText = "✅ Correct!";
+    if (correct) {
+        document.getElementById("feedback").innerText = "✅ Correto!";
+
+        if (attempts < 3) {
+            currentDifficulty++;
+        }
+
+        saveProgress(true);
         loadQuestion();
     } else {
-        if (attempts >= 3) {
-            document.getElementById("hint").innerText =
-                "💡 Hint: " + questions[index].hint;
+        document.getElementById("feedback").innerText = "❌ Incorreto. Tente novamente.";
+
+        if (attempts === 3) {
+            document.getElementById("hint").innerText = "💡 Dica: " + currentQuestion.hint;
         }
-        document.getElementById("status").innerText = "❌ Try again";
+
+        if (attempts >= 5) {
+            document.getElementById("skipBtn").style.display = "block";
+        }
+
+        saveProgress(false);
     }
 }
 
-function saveProgress() {
-    if (answeredCount % 50 === 0) {
-        localStorage.setItem("answeredCount", answeredCount);
-        console.log("Progress auto-saved");
-    }
+/* =========================
+   PULAR PERGUNTA
+========================= */
+function skipQuestion() {
+    currentDifficulty = Math.max(1, currentDifficulty - 2);
+    loadQuestion();
 }
 
-function speak(text) {
-    const msg = new SpeechSynthesisUtterance(text);
-    msg.lang = "en-US";
-    speechSynthesis.speak(msg);
+/* =========================
+   SALVAMENTO (SIMULA GOOGLE)
+========================= */
+function saveProgress(correct) {
+    let data = JSON.parse(localStorage.getItem("lalatina_progress")) || {
+        attempts: 0,
+        errors: 0
+    };
+
+    data.attempts++;
+    if (!correct) data.errors++;
+
+    localStorage.setItem("lalatina_progress", JSON.stringify(data));
 }
 
-function repeatAudio() {
-    speak(questions[index].text);
-}
-
-/* ===== START ===== */
+/* =========================
+   INICIAR
+========================= */
 loadQuestion();
 </script>
 
