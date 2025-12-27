@@ -2,189 +2,150 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>LaLatina – Fase 1 (Teste)</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+<title>LaLatina</title>
 <style>
-body {
-    font-family: Arial, sans-serif;
-    background: #0f1220;
-    color: #fff;
-    padding: 20px;
-}
-.card {
-    background: #1c2040;
-    padding: 20px;
-    border-radius: 10px;
-    max-width: 500px;
-    margin: auto;
-}
-button {
-    padding: 10px;
-    margin-top: 10px;
-    width: 100%;
-    font-size: 16px;
-    border: none;
-    border-radius: 5px;
-}
-input {
-    width: 100%;
-    padding: 10px;
-    font-size: 16px;
-}
-#hint {
-    margin-top: 10px;
-    color: #ffd966;
-}
-#skipBtn {
-    background: #b33;
-    display: none;
-}
-#submitBtn {
-    background: #3b7cff;
-}
+body { font-family: Arial; background:#111; color:#fff; text-align:center; }
+button { padding:10px; margin:5px; }
+input { padding:10px; width:80%; }
+#hint { color:#0f0; }
 </style>
 </head>
 
 <body>
 
-<div class="card">
-    <h2>LaLatina – Fase 1</h2>
-    <p><strong>Dificuldade:</strong> <span id="difficulty">1%</span></p>
+<h1>LaLatina</h1>
+<h2 id="phase">Fase 1</h2>
+<h3 id="difficulty">Dificuldade: 1%</h3>
 
-    <p id="questionText"></p>
+<p id="question"></p>
 
-    <button onclick="playAudio()">🔊 Ouvir</button>
+<input id="answer" placeholder="Digite em português">
+<br>
+<button onclick="submitAnswer()">Responder</button>
+<button onclick="skipQuestion()" id="skipBtn" style="display:none;">Pular</button>
 
-    <input type="text" id="answer" placeholder="Digite em português">
-
-    <button id="submitBtn" onclick="checkAnswer()">Responder</button>
-    <button id="skipBtn" onclick="skipQuestion()">Pular pergunta</button>
-
-    <p id="hint"></p>
-    <p id="feedback"></p>
-</div>
+<p id="feedback"></p>
+<p id="hint"></p>
 
 <script>
-/* =========================
-   BANCO DE PERGUNTAS (Fase 1)
-   Inglês -> Português
-========================= */
-const questions = [
-    { id: 1, text: "Hi", answers: ["oi", "olá"], difficulty: 1, hint: "Forma informal de cumprimento" },
-    { id: 2, text: "Hello", answers: ["olá", "oi"], difficulty: 2, hint: "Cumprimento comum" },
-    { id: 3, text: "Good morning", answers: ["bom dia"], difficulty: 3, hint: "Usado ao acordar" },
-    { id: 4, text: "Good afternoon", answers: ["boa tarde"], difficulty: 4, hint: "Depois do almoço" },
-    { id: 5, text: "Good night", answers: ["boa noite"], difficulty: 5, hint: "Antes de dormir" }
-];
+/* ======================
+   BANCO DE PERGUNTAS (DEMO)
+   ====================== */
 
-/* =========================
-   ESTADO DO ALGORITMO
-========================= */
-let currentDifficulty = 1;
-let attempts = 0;
+const phases = {};
+for (let p = 1; p <= 10; p++) {
+  phases[p] = [];
+  for (let d = (p-1)*100+1; d <= p*100; d++) {
+    phases[p].push({
+      text: d <= 5 ? "Hello" :
+            d <= 10 ? "Good morning" :
+            d <= 20 ? "Good night" :
+            d <= 40 ? "How are you?" :
+            d <= 60 ? "What is your name?" :
+            d <= 80 ? "Where are you from?" :
+            "Can you help me?",
+      hint: "Frase comum do dia a dia",
+      difficulty: d
+    });
+  }
+}
+
+/* ======================
+   ESTADO DO USUÁRIO
+   ====================== */
+
+let state = JSON.parse(localStorage.getItem("lalatina")) || {
+  phase: 1,
+  difficulty: 1,
+  attempts: 0,
+  corrects: 0,
+  examUnlocked: false
+};
+
 let currentQuestion = null;
 
-/* =========================
-   NORMALIZA TEXTO
-========================= */
-function normalize(text) {
-    return text
-        .toLowerCase()
-        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^\w\s]/gi, "")
-        .trim();
+/* ======================
+   FUNÇÕES PRINCIPAIS
+   ====================== */
+
+function speak(text) {
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = "en-US";
+  speechSynthesis.speak(utter);
 }
 
-/* =========================
-   ESCOLHE PERGUNTA
-========================= */
 function loadQuestion() {
-    attempts = 0;
-    document.getElementById("hint").innerText = "";
-    document.getElementById("feedback").innerText = "";
-    document.getElementById("skipBtn").style.display = "none";
-    document.getElementById("answer").value = "";
-
-    const pool = questions.filter(q => q.difficulty === currentDifficulty);
-    currentQuestion = pool[Math.floor(Math.random() * pool.length)];
-
-    document.getElementById("questionText").innerText = currentQuestion.text;
-    document.getElementById("difficulty").innerText = currentDifficulty + "%";
-
-    playAudio();
+  const pool = phases[state.phase].filter(q => q.difficulty === state.difficulty);
+  currentQuestion = pool[Math.floor(Math.random()*pool.length)];
+  document.getElementById("question").innerText = currentQuestion.text;
+  document.getElementById("difficulty").innerText = "Dificuldade: " + state.difficulty + "%";
+  document.getElementById("hint").innerText = "";
+  document.getElementById("feedback").innerText = "";
+  document.getElementById("skipBtn").style.display = "none";
+  state.attempts = 0;
+  speak(currentQuestion.text);
 }
 
-/* =========================
-   ÁUDIO EM INGLÊS
-========================= */
-function playAudio() {
-    const utterance = new SpeechSynthesisUtterance(currentQuestion.text);
-    utterance.lang = "en-US";
-    speechSynthesis.speak(utterance);
+function normalize(txt) {
+  return txt.toLowerCase().replace(/[^\w\s]/g,"").trim();
 }
 
-/* =========================
-   VERIFICA RESPOSTA
-========================= */
-function checkAnswer() {
-    attempts++;
-    const userAnswer = normalize(document.getElementById("answer").value);
+function submitAnswer() {
+  const user = normalize(document.getElementById("answer").value);
+  state.attempts++;
 
-    const correct = currentQuestion.answers.some(a =>
-        normalize(a) === userAnswer
-    );
+  // Validação semântica simulada
+  const accepted = [
+    "oi","olá","bom dia","boa noite",
+    "como vai","qual é seu nome",
+    "de onde você é","você pode me ajudar"
+  ];
 
-    if (correct) {
-        document.getElementById("feedback").innerText = "✅ Correto!";
-
-        if (attempts < 3) {
-            currentDifficulty++;
-        }
-
-        saveProgress(true);
-        loadQuestion();
-    } else {
-        document.getElementById("feedback").innerText = "❌ Incorreto. Tente novamente.";
-
-        if (attempts === 3) {
-            document.getElementById("hint").innerText = "💡 Dica: " + currentQuestion.hint;
-        }
-
-        if (attempts >= 5) {
-            document.getElementById("skipBtn").style.display = "block";
-        }
-
-        saveProgress(false);
-    }
+  if (accepted.some(a => user.includes(a))) {
+    correct();
+  } else {
+    wrong();
+  }
 }
 
-/* =========================
-   PULAR PERGUNTA
-========================= */
+function correct() {
+  document.getElementById("feedback").innerText = "Correto!";
+  state.corrects++;
+  if (state.attempts < 3) state.difficulty++;
+  save();
+  checkProgress();
+  setTimeout(loadQuestion,1000);
+}
+
+function wrong() {
+  document.getElementById("feedback").innerText = "Tente novamente";
+  if (state.attempts === 3) {
+    document.getElementById("hint").innerText = "Dica: " + currentQuestion.hint;
+  }
+  if (state.attempts >= 5) {
+    document.getElementById("skipBtn").style.display = "inline";
+  }
+  save();
+}
+
 function skipQuestion() {
-    currentDifficulty = Math.max(1, currentDifficulty - 2);
-    loadQuestion();
+  state.difficulty = Math.max((state.phase-1)*100+1, state.difficulty-2);
+  save();
+  loadQuestion();
 }
 
-/* =========================
-   SALVAMENTO (SIMULA GOOGLE)
-========================= */
-function saveProgress(correct) {
-    let data = JSON.parse(localStorage.getItem("lalatina_progress")) || {
-        attempts: 0,
-        errors: 0
-    };
-
-    data.attempts++;
-    if (!correct) data.errors++;
-
-    localStorage.setItem("lalatina_progress", JSON.stringify(data));
+function checkProgress() {
+  if (state.corrects >= 100 && !state.examUnlocked) {
+    state.examUnlocked = true;
+    alert("Prova liberada!");
+  }
 }
 
-/* =========================
-   INICIAR
-========================= */
+function save() {
+  localStorage.setItem("lalatina", JSON.stringify(state));
+}
+
+document.getElementById("phase").innerText = "Fase " + state.phase;
 loadQuestion();
 </script>
 
